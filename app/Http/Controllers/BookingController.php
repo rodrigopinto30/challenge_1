@@ -2,8 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\BookingsExport;
+use App\Http\Requests\BookingRequest;
+use App\Http\Requests\BookingUpdateRequest;
 use App\Models\Booking;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Resources\BookingResource;
+use Maatwebsite\Excel\Facades\Excel;
 
 class BookingController extends Controller
 {
@@ -19,54 +25,48 @@ class BookingController extends Controller
             $query->where('booking_date', '<=', $request->end_date);
         }
 
-        $bookings = $query->get();
+        $bookings = $query->with(['tour', 'hotel'])->paginate(10);
 
-        foreach ($bookings as $booking) {
-            $booking->tour;
-            $booking->hotel;
-        }
-
-        return response()->json($bookings, 200);
+        return BookingResource::collection($bookings);
     }
 
-    public function store(Request $request)
+    public function store(BookingRequest $request)
     {
-        $validatedData = $request->validate([
-            'tour_id' => 'required|exists:tours,id',
-            'hotel_id' => 'required|exists:hotels,id',
-            'customer_name' => 'required|string|max:255',
-            'customer_email' => 'required|email|max:255',
-            'number_of_people' => 'required|integer|min:1',
-            'booking_date' => 'required|date',
-        ]);
+        $bookingValidated = $request->validated();
 
-        $booking = Booking::create($validatedData);
+        $booking = Booking::create($bookingValidated);
         return response()->json($booking, 201);
     }
 
-    public function show(Booking $booking)
+    public function show(Booking $booking): JsonResponse
     {
         return response()->json($booking, 200);
     }
 
-    public function update(Request $request, Booking $booking)
+    public function update(BookingUpdateRequest $request, Booking $booking): JsonResponse
     {
-        $validatedData = $request->validate([
-            'tour_id' => 'sometimes|exists:tours,id',
-            'hotel_id' => 'sometimes|exists:hotels,id',
-            'customer_name' => 'sometimes|string|max:255',
-            'customer_email' => 'sometimes|email|max:255',
-            'number_of_people' => 'sometimes|integer|min:1',
-            'booking_date' => 'sometimes|date',
-        ]);
-
-        $booking->update($validatedData);
+        $bookingValidated = $request->validated();
+        $booking->update($bookingValidated);
         return response()->json($booking, 200);
     }
 
-    public function destroy(Booking $booking)
+    public function destroy(Booking $booking): JsonResponse
     {
         $booking->delete();
         return response()->json(null, 204);
+    }
+
+    public function search(Request $request): JsonResponse {
+
+        $search = $request->input('search');
+        $booking = Booking::with(['tour', 'hotel'])
+            ->search($search)
+            ->paginate(5);
+
+        return response()->json($booking);
+    }
+
+    public function export() {
+        return Excel::download(new BookingsExport, 'bookings.csv');
     }
 }

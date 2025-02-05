@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TourRequest;
+use App\Http\Requests\TourUpdateRequest;
 use App\Models\Tour;
 use Illuminate\Http\Request;
 
@@ -30,17 +32,11 @@ class TourController extends Controller
         return response()->json($query->get(), 200);
     }
 
-    public function store(Request $request)
+    public function store(TourRequest $request)
     {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'price' => 'required|numeric',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
+        $tourValidated = $request->validated();
 
-        $tour = Tour::create($validatedData);
+        $tour = Tour::create($tourValidated);
         return response()->json($tour, 201);
     }
 
@@ -49,17 +45,12 @@ class TourController extends Controller
         return response()->json($tour, 200);
     }
 
-    public function update(Request $request, Tour $tour)
+    public function update(TourUpdateRequest $request, Tour $tour)
     {
-        $validatedData = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string',
-            'price' => 'sometimes|numeric',
-            'start_date' => 'sometimes|date',
-            'end_date' => 'sometimes|date|after_or_equal:start_date',
-        ]);
+        $tourValidated = $request->validated();
 
-        $tour->update($validatedData);
+        $tour->update($tourValidated);
+        
         return response()->json($tour, 200);
     }
 

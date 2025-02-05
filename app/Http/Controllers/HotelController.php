@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\HotelRequest;
+use App\Http\Requests\HotelUpdateRequest;
 use App\Models\Hotel;
 use Illuminate\Http\Request;
 
@@ -30,17 +32,12 @@ class HotelController extends Controller
         return response()->json($query->get(), 200);
     }
 
-    public function store(Request $request)
+    public function store(HotelRequest $request)
     {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'address' => 'required|string',
-            'rating' => 'required|integer',
-            'price_per_night' => 'required|numeric',
-        ]);
 
-        $hotel = Hotel::create($validatedData);
+        $hotelValidated = $request->validated();
+
+        $hotel = Hotel::create($hotelValidated);
         return response()->json($hotel, 201);
     }
 
@@ -49,17 +46,12 @@ class HotelController extends Controller
         return response()->json($hotel, 200);
     }
 
-    public function update(Request $request, Hotel $hotel)
+    public function update(HotelUpdateRequest $request, Hotel $hotel)
     {
-        $validatedData = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string',
-            'address' => 'sometimes|string',
-            'rating' => 'sometimes|integer',
-            'price_per_night' => 'sometimes|numeric',
-        ]);
 
-        $hotel->update($validatedData);
+        $hotelValidated = $request->validated();
+
+        $hotel->update($hotelValidated);
         return response()->json($hotel, 200);
     }
 
